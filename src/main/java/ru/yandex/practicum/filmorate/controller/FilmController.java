@@ -34,7 +34,7 @@ public class FilmController {
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        checkFilm(film);
+        //checkFilm(film);
         film.setId(getNextId());
         films.put(film.getId(), film);
         log.info("Добавили фильм {}", film);
@@ -48,7 +48,7 @@ public class FilmController {
             throw new ConditionsNotMetException("id должен быть указан");
         }
         if (films.containsKey(newFilm.getId())) {
-            checkFilm(newFilm);
+            //checkFilm(newFilm);
             Film oldFilm = films.get(newFilm.getId());
             oldFilm.setName(newFilm.getName());
             oldFilm.setDescription(newFilm.getDescription());

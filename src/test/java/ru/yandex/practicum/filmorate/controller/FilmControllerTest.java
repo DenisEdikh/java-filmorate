@@ -52,7 +52,7 @@ public class FilmControllerTest {
     @ParameterizedTest
     @ValueSource(strings = {"DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription" +
             "DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription" +
-            "DescriptionDe", "Description"})
+            "DescriptionDe", "Description", ""})
     void shouldReturnOkWhenCorrectDescription(String description) {
         film.setName("name");
         // Длина описания равна 200 символов

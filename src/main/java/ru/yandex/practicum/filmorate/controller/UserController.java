@@ -32,7 +32,7 @@ public class UserController {
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        checkUser(user);
+        //checkUser(user);
         user.setId(getNextId());
         if (user.getName() == null) {
             user.setName(user.getLogin());
@@ -49,7 +49,7 @@ public class UserController {
             throw new ConditionsNotMetException("id должен быть указан");
         }
         if (users.containsKey(newUser.getId())) {
-            checkUser(newUser);
+            //checkUser(newUser);
             User oldUser = users.get(newUser.getId());
             oldUser.setEmail(newUser.getEmail());
             oldUser.setLogin(newUser.getLogin());
