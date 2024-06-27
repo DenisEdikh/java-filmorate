@@ -5,8 +5,7 @@ import jakarta.validation.ConstraintValidatorContext;
 
 import java.time.LocalDate;
 
-public class DateValidator implements ConstraintValidator<DateValidation, LocalDate>
-{
+public class DateValidator implements ConstraintValidator<DateValidation, LocalDate> {
     @Override
     public void initialize(DateValidation constraintAnnotation) {
         ConstraintValidator.super.initialize(constraintAnnotation);
