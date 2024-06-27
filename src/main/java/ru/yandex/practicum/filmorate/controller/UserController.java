@@ -10,10 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +21,8 @@ import java.util.Map;
 @RequestMapping("/users")
 public class UserController {
 
-    private Map<Long, User> users = new HashMap<>();
+    private final Map<Long, User> users = new HashMap<>();
+    private long counterId = 0L;
 
     @GetMapping
     public Collection<User> getAll() {
@@ -32,7 +31,6 @@ public class UserController {
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        //checkUser(user);
         user.setId(getNextId());
         if (user.getName() == null) {
             user.setName(user.getLogin());
@@ -49,7 +47,6 @@ public class UserController {
             throw new ConditionsNotMetException("id должен быть указан");
         }
         if (users.containsKey(newUser.getId())) {
-            //checkUser(newUser);
             User oldUser = users.get(newUser.getId());
             oldUser.setEmail(newUser.getEmail());
             oldUser.setLogin(newUser.getLogin());
@@ -68,21 +65,7 @@ public class UserController {
 
     }
 
-    void checkUser(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")
-                || user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")
-                || user.getBirthday() == null || user.getBirthday().isAfter(LocalDate.now())) {
-            log.warn("Не выполнены условия");
-            throw new ValidationException("Польователь не прошел проверку");
-        }
-    }
-
     private Long getNextId() {
-        long counterId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
         return ++counterId;
     }
 }
