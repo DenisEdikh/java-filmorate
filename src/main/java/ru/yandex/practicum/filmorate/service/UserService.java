@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -9,13 +9,9 @@ import java.util.Collection;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
-
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
 
     public void addFriend(Long id, Long friendId) {
         final User user = userStorage.getUserById(id);
