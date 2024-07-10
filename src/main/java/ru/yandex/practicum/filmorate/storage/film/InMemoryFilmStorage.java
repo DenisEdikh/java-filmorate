@@ -19,7 +19,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     private long counterId = 0L;
 
     @Override
-    public Collection<Film> getAll() {
+    public Collection<Film> getAllFilms() {
         return films.values();
     }
 
@@ -56,11 +56,6 @@ public class InMemoryFilmStorage implements FilmStorage {
             throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
         }
     }
-
-//    @Override
-//    public void deleteFilmById() {
-//
-//    }
 
     private Long getNextId() {
         return ++counterId;
