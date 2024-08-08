@@ -35,6 +35,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "JOIN likes l ON f.ID = l.film_id " +
             "GROUP BY f.id " +
             "ORDER BY COUNT(l.user_id) DESC";
+
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
     }
