@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.NotSupportedOperationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
@@ -13,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Component
+@Qualifier("inMemoryUserStorage")
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
@@ -24,9 +27,8 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User getUserById(Long userId) {
-        return Optional.ofNullable(users.get(userId))
-                .orElseThrow(() -> new NotFoundException(String.format("Фильм с id = %d не найден", userId)));
+    public Optional<User> getUserById(Long userId) {
+        return Optional.ofNullable(users.get(userId));
     }
 
     @Override
@@ -66,5 +68,30 @@ public class InMemoryUserStorage implements UserStorage {
 
     private Long getNextId() {
         return ++counterId;
+    }
+
+    @Override
+    public Collection<User> getUsersByFilmId(Long filmId) {
+        throw new NotSupportedOperationException("Метод в данной реализации интерфейса не поддерживается");
+    }
+
+    @Override
+    public void addFriend(Long userId, Long friendId) {
+        throw new NotSupportedOperationException("Метод в данной реализации интерфейса не поддерживается");
+    }
+
+    @Override
+    public void deleteFriend(Long id, Long friendId) {
+        throw new NotSupportedOperationException("Метод в данной реализации интерфейса не поддерживается");
+    }
+
+    @Override
+    public Collection<User> getFriendsUser(Long userId) {
+        throw new NotSupportedOperationException("Метод в данной реализации интерфейса не поддерживается");
+    }
+
+    @Override
+    public Collection<User> getCommonFriends(Long id, Long friendId) {
+        throw new NotSupportedOperationException("Метод в данной реализации интерфейса не поддерживается");
     }
 }

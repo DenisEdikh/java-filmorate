@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.NotSupportedOperationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
@@ -13,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Component
+@Qualifier("inMemoryFilmStorage")
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Long, Film> films = new HashMap<>();
@@ -24,9 +27,8 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film getFilmById(Long filmId) {
-        return Optional.ofNullable(films.get(filmId))
-                .orElseThrow(() -> new NotFoundException(String.format("Фильм с id = %d не найден", filmId)));
+    public Optional<Film> getFilmById(Long filmId) {
+        return Optional.ofNullable(films.get(filmId));
     }
 
     @Override
@@ -59,5 +61,20 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     private Long getNextId() {
         return ++counterId;
+    }
+
+    @Override
+    public void createLike(Long filmId, Long userId) {
+        throw new NotSupportedOperationException("Метод в данной реализации интерфейса не поддерживается");
+    }
+
+    @Override
+    public void deleteLike(Long filmId, Long userId) {
+        throw new NotSupportedOperationException("Метод в данной реализации интерфейса не поддерживается");
+    }
+
+    @Override
+    public Collection<Film> getPopularFilms() {
+        throw new NotSupportedOperationException("Метод в данной реализации интерфейса не поддерживается");
     }
 }
