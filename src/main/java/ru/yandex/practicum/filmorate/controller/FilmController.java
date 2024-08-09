@@ -16,7 +16,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
-import java.util.List;
 
 @RestController
 @RequestMapping("/films")
@@ -28,7 +27,16 @@ public class FilmController {
 
     @GetMapping
     public Collection<Film> getAllFilms() {
-        return filmService.getAllFilms();
+        final Collection<Film> films = filmService.getAllFilms();
+        log.info("Возвращены все фильмы");
+        return films;
+    }
+
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable(value = "id") Long filmId) {
+        final Film film = filmService.getFilmById(filmId);
+        log.info("Возвращен фильм с id = {}", filmId);
+        return film;
     }
 
     @PostMapping
@@ -42,20 +50,21 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable(value = "id", required = false) Long id,
-                           @PathVariable(value = "userId", required = false) Long userId) {
+    public void addLike(@PathVariable(value = "id") Long id,
+                        @PathVariable(value = "userId") Long userId) {
         filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void deleteLike(@PathVariable(value = "id", required = false) Long id,
-                              @PathVariable(value = "userId", required = false) Long userId) {
+    public void deleteLike(@PathVariable(value = "id") Long id,
+                           @PathVariable(value = "userId") Long userId) {
         filmService.deleteLike(id, userId);
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(value = "count", defaultValue = "10", required = false)
-                                     Long count) {
-        return filmService.getPopularFilms(count);
+    public Collection<Film> getPopularFilms(@RequestParam(value = "count", defaultValue = "10") Long count) {
+        final Collection<Film> popularFilms = filmService.getPopularFilms(count);
+        log.info("Возвращены популярные фильмы");
+        return popularFilms;
     }
 }
