@@ -71,7 +71,6 @@ public class FilmService {
         final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(filmId);
         final Collection<User> users = userStorage.getUsersByFilmId(filmId);
         film.setMpa(mpa);
-        film.getLikes().addAll(users);
         film.getGenres().addAll(genres);
         return film;
     }
