@@ -64,6 +64,6 @@ public class UserController {
                                              @PathVariable(value = "otherId") Long otherId) {
         final Collection<User> commonFriends = userService.getCommonFriends(id, otherId);
         log.info("Выгружены общие друзья пользователей с id = {}, {}", id, otherId);
-        return userService.getCommonFriends(id, otherId);
+        return commonFriends;
     }
 }
