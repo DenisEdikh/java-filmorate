@@ -12,18 +12,17 @@ import java.util.Optional;
 @Repository
 @Slf4j
 public class MpaDbStorage extends BaseDbStorage<Mpa> {
-    private static final String FIND_ALL_MPA = "SELECT * FROM mpa";
-    private static final String FIND_MPA_BY_ID = "SELECT * FROM mpa WHERE id = ?";
-
     public MpaDbStorage(JdbcTemplate jdbc, RowMapper<Mpa> mapper) {
         super(jdbc, mapper);
     }
 
     public Collection<Mpa> getAllMpa() {
-        return findMany(FIND_ALL_MPA);
+        String findAllMpa = "SELECT * FROM mpa";
+        return findMany(findAllMpa);
     }
 
     public Optional<Mpa> getMpaById(Integer mpaId) {
-        return findOne(FIND_MPA_BY_ID, mpaId);
+        String findMpaById = "SELECT * FROM mpa WHERE id = ?";
+        return findOne(findMpaById, mpaId);
     }
 }
