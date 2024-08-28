@@ -34,21 +34,13 @@ public class FilmService {
         final Collection<Film> films = filmStorage.getPopularFilms().stream()
                 .limit(count)
                 .toList();
-        for (Film film : films) {
-            final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(film.getId());
-            film.getGenres().addAll(genres);
-            film.setMpa(checkMpa(film.getMpa().getId()));
-        }
+        setFields(films);
         return films;
     }
 
     public Collection<Film> getAllFilms() {
         final Collection<Film> films = filmStorage.getAllFilms();
-        for (Film film : films) {
-            final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(film.getId());
-            film.getGenres().addAll(genres);
-            film.setMpa(checkMpa(film.getMpa().getId()));
-        }
+        setFields(films);
         return films;
     }
 
@@ -93,6 +85,21 @@ public class FilmService {
         filmStorage.deleteLike(filmId, userId);
     }
 
+    // Метод возвращения общих фильмов у двух людей
+    public Collection<Film> getCommonFilms(Long userId, Long friendId) {
+        log.debug("Начата проверка наличия пользователя c id = {} и пользователя с id = {} в методе getCommonFilms",
+                userId,
+                friendId);
+        checkUser(userId);
+        checkUser(friendId);
+        log.debug("Поверка наличия пользователя c id = {} и пользователя с id = {} в методе getCommonFilms завершена",
+                userId,
+                friendId);
+        Collection<Film> films = filmStorage.getCommonFilms(userId, friendId);
+        setFields(films);
+        return films;
+    }
+
     private Mpa checkMpa(Integer mpaId) {
         return mpaDbStorage.getMpaById(mpaId)
                 .orElseThrow(() -> {
@@ -123,6 +130,7 @@ public class FilmService {
         }
     }
 
+    // Методе проверки наличия фильма в базе данных
     private Film checkFilm(Long filmId) {
         return filmStorage.getFilmById(filmId)
                 .orElseThrow(() -> {
@@ -131,11 +139,21 @@ public class FilmService {
                 });
     }
 
+    // Методе проверки наличия пользователя в базе данных
     private User checkUser(Long userId) {
         return userStorage.getUserById(userId)
                 .orElseThrow(() -> {
                     log.warn("Пользователь c id = {} не найден", userId);
                     return new NotFoundException(String.format("Пользователь с id = %d не найден", userId));
                 });
+    }
+
+    // Метод установки полей в фильме
+    private void setFields(Collection<Film> films) {
+        for (Film film : films) {
+            final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(film.getId());
+            film.addGenre(genres);
+            film.setMpa(checkMpa(film.getMpa().getId()));
+        }
     }
 }

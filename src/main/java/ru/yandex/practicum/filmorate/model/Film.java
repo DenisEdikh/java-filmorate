@@ -8,6 +8,7 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.validators.DateValidation;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,4 +28,8 @@ public class Film {
     @NotNull
     private Mpa mpa;
     private Set<Genre> genres = new HashSet<>();
+
+    public void addGenre(Collection<Genre> genres) {
+        this.genres.addAll(genres);
+    }
 }
