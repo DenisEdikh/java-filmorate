@@ -1,10 +1,10 @@
-drop table if exists likes;
-drop table if exists film_genre;
-drop table if exists friends;
-drop table if exists users;
-drop table if exists films;
-drop table if exists genres;
-drop table if exists mpa;
+drop table if exists likes cascade;
+drop table if exists film_genre cascade;
+drop table if exists friends cascade;
+drop table if exists users cascade;
+drop table if exists films cascade;
+drop table if exists genres cascade;
+drop table if exists mpa cascade;
 
 CREATE TABLE IF NOT EXISTS mpa (
 id int NOT NULL PRIMARY KEY,
