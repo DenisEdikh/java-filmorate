@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface FilmStorage {
     Collection<Film> getAllFilms();
 
-    Collection<Film> getPopularFilms();
+    Collection<Film> getPopularFilms(Long count);
 
     Collection<Film> getCommonFilms(Long userId, Long friendId);
 
@@ -17,6 +17,8 @@ public interface FilmStorage {
     Film create(Film film);
 
     Film update(Film newFilm);
+
+    void deleteFilm(Long id);
 
     void createLike(Long filmId, Long userId);
 

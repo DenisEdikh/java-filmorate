@@ -23,6 +23,14 @@ public class UserService {
         return userStorage.getAllUsers();
     }
 
+    public User getUserById(Long id) {
+        return userStorage.getUserById(id)
+                .orElseThrow(() -> {
+                    log.warn("Пользователь c id = {} не найден", id);
+                    return new NotFoundException(String.format("Пользователь с id = %d не найден", id));
+                });
+    }
+
     public User create(User user) {
         return userStorage.create(checkName(user));
     }
@@ -31,21 +39,28 @@ public class UserService {
         log.debug("Начата проверка наличия у пользователя id");
         checkUserId(user);
         log.debug("Начата проверка наличия пользователя c id = {} в БД", user.getId());
-        checkUser(user.getId());
+        getUserById(user.getId());
         return userStorage.update(checkName(user));
+    }
+    // Метод удаления пользователя
+
+    public void deleteUser(Long id) {
+        log.debug("Начата проверка наличия пользователя c id = {} в методе deleteUser", id);
+        getUserById(id);
+        userStorage.delete(id);
     }
 
     public void addFriend(Long id, Long friendId) {
         log.debug("Начата проверка наличия пользователя c id = {}, {} в методе addFriend", id, friendId);
-        checkUser(id);
-        checkUser(friendId);
+        getUserById(id);
+        getUserById(friendId);
         userStorage.addFriend(id, friendId);
     }
 
     public void deleteFriend(Long id, Long friendId) {
         log.debug("Начата проверка наличия пользователей c id = {}, {} в методе deleteFriend", id, friendId);
-        checkUser(id);
-        checkUser(friendId);
+        getUserById(id);
+        getUserById(friendId);
         if (userStorage.getFriendsUser(id).stream()
                 .map(User::getId)
                 .anyMatch(num -> Objects.equals(num, friendId))) {
@@ -56,19 +71,19 @@ public class UserService {
 
     public Collection<User> getFriendsUser(Long id) {
         log.debug("Начата проверка наличия пользователя c id = {} в методе getFriendsUser", id);
-        checkUser(id);
+        getUserById(id);
         return userStorage.getFriendsUser(id);
     }
 
 
     public Collection<User> getCommonFriends(Long id, Long otherId) {
         log.debug("Начата проверка наличия пользователя c id = {}, {} в методе getCommonFriends", id, otherId);
-        checkUser(id);
-        checkUser(otherId);
+        getUserById(id);
+        getUserById(otherId);
         return userStorage.getCommonFriends(id, otherId);
     }
+    // Метод проверки наличия имени в юзере при запросе
 
-    // метод проверки наличия имени в юзере при запросе
     private User checkName(User user) {
         if (Objects.isNull(user.getName())) {
             log.debug("У пользователя c id = {} отсутствует имя", user.getId());
@@ -82,13 +97,5 @@ public class UserService {
             log.warn("У пользователя {} отсутствует id", user);
             throw new ConditionsNotMetException("id должен быть указан");
         }
-    }
-
-    private User checkUser(Long userId) {
-        return userStorage.getUserById(userId)
-                .orElseThrow(() -> {
-                    log.warn("Пользователь c id = {} не найден", userId);
-                    return new NotFoundException(String.format("Пользователь с id = %d не найден", userId));
-                });
     }
 }

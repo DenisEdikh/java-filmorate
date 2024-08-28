@@ -30,23 +30,23 @@ name varchar(100) NOT NULL,
 description varchar (200) NOT NULL,
 release_date date NOT NULL,
 duration int NOT NULL,
-mpa_id int NOT NULL REFERENCES mpa(id)
+mpa_id int NOT NULL REFERENCES mpa(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS film_genre (
-film_id bigint NOT NULL REFERENCES films(id),
-genre_id int NOT NULL REFERENCES genres(id),
+film_id bigint NOT NULL REFERENCES films(id) ON DELETE CASCADE,
+genre_id int NOT NULL REFERENCES genres(id) ON DELETE CASCADE,
 PRIMARY KEY(film_id, genre_id)
 );
 
 CREATE TABLE IF NOT EXISTS likes (
-film_id bigint NOT NULL REFERENCES films(id),
-user_id bigint NOT NULL REFERENCES users(id),
+film_id bigint NOT NULL REFERENCES films(id) ON DELETE CASCADE,
+user_id bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 PRIMARY KEY(film_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS friends (
-user_id bigint not null REFERENCES users(id),
-user_friend_id bigint not null REFERENCES users(id),
+user_id bigint not null REFERENCES users(id) ON DELETE CASCADE,
+user_friend_id bigint not null REFERENCES users(id) ON DELETE CASCADE,
 PRIMARY KEY(user_id, user_friend_id)
 );

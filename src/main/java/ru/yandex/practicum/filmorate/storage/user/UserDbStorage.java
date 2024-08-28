@@ -47,6 +47,13 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     @Override
+    public void delete(Long id) {
+        String deleteUserQuery = "DELETE FROM users WHERE id = ?";
+        update(deleteUserQuery, id);
+        log.info("Удалили пользователя с id =  {}", id);
+    }
+
+    @Override
     public Optional<User> getUserById(Long userId) {
         String findByIdQuery = "SELECT * FROM users WHERE id = ?";
         return findOne(findByIdQuery, userId);
@@ -96,4 +103,6 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                 "WHERE f1.user_id = ?))";
         return findMany(findCommonFriendsQuery, id, otherId);
     }
+
+
 }
