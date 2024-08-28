@@ -10,11 +10,9 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.MpaDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -25,13 +23,12 @@ import java.util.Objects;
 public class FilmService {
     @Qualifier("filmDbStorage")
     private final FilmStorage filmStorage;
-    @Qualifier("userDbStorage")
-    private final UserStorage userStorage;
+    private final UserService userService;
     private final GenreDbStorage genreDbStorage;
     private final MpaDbStorage mpaDbStorage;
 
-    public Collection<Film> getPopularFilms(Long count) {
-        final Collection<Film> films = filmStorage.getPopularFilms(count);
+    public Collection<Film> getPopularFilms(Long count, Integer genreId, Integer year) {
+        final Collection<Film> films = filmStorage.getPopularFilms(count, genreId, year);
         setFields(films);
         return films;
     }
@@ -43,28 +40,41 @@ public class FilmService {
     }
 
     public Film create(Film film) {
+        log.debug("Начата проверка наличия рейтинга и жанров у фильма c id = {} в методе create", film.getId());
         checkMpaAndGenres(film);
+        log.debug("Закончена проверка наличия рейтинга и жанров у фильма c id = {} в методе create", film.getId());
         return filmStorage.create(film);
     }
 
     public Film update(Film film) {
+        log.debug("Начата проверка наличия id у фильма в методе update");
         checkFilmId(film);
+        log.debug("Закончена проверка наличия id у фильма в методе update");
+        log.debug("Начата проверка наличия фильма c id = {} в БД в методе update", film.getId());
+        checkFilm(film.getId());
+        log.debug("Закончена проверка наличия фильма c id = {} в БД в методе update", film.getId());
+        log.debug("Начата проверка наличия рейтинга и жанров у фильма c id = {} в методе update", film.getId());
         checkMpaAndGenres(film);
+        log.debug("Закончена проверка наличия рейтинга и жанров у фильма c id = {} в методе update", film.getId());
         return filmStorage.update(film);
     }
 
     public void deleteFilm(Long id) {
+        log.debug("Начата проверка наличия фильма c id = {} в методе delete", id);
         checkFilm(id);
+        log.debug("Закончена проверка наличия фильма c id = {} в методе delete", id);
         filmStorage.deleteFilm(id);
     }
 
-    public Film getFilmById(Long filmId) {
-        log.debug("Начата проверка наличия фильма c id = {} в методе FilmById", filmId);
-        final Film film = checkFilm(filmId);
+    public Film getFilmById(Long id) {
+        log.debug("Начата проверка наличия фильма c id = {} в методе FilmById", id);
+        final Film film = checkFilm(id);
+        log.debug("Закончена проверка наличия фильма c id = {} в методе FilmById", id);
         log.debug("Начата проверка наличия Mpa с id = {} в методе FilmById", film.getMpa().getId());
         final Mpa mpa = checkMpa(film.getMpa().getId());
-        final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(filmId);
-        final Collection<User> users = userStorage.getUsersByFilmId(filmId);
+        log.debug("Закончена проверка наличия Mpa с id = {} в методе FilmById", film.getMpa().getId());
+        final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(id);
+//        final Collection<User> users = userStorage.getUsersByFilmId(id);
         film.setMpa(mpa);
         film.addGenre(genres);
         return film;
@@ -75,7 +85,10 @@ public class FilmService {
                 filmId,
                 userId);
         checkFilm(filmId);
-        checkUser(userId);
+        userService.getUserById(userId);
+        log.debug("Закончена проверка наличия фильма c id = {} и пользователя с id = {} в методе addLike",
+                filmId,
+                userId);
         filmStorage.createLike(filmId, userId);
     }
 
@@ -84,7 +97,10 @@ public class FilmService {
                 filmId,
                 userId);
         checkFilm(filmId);
-        checkUser(userId);
+        userService.getUserById(userId);
+        log.debug("Закончена проверка наличия фильма c id = {} и пользователя с id = {} в методе deleteLike",
+                filmId,
+                userId);
         filmStorage.deleteLike(filmId, userId);
     }
 
@@ -93,9 +109,9 @@ public class FilmService {
         log.debug("Начата проверка наличия пользователя c id = {} и пользователя с id = {} в методе getCommonFilms",
                 userId,
                 friendId);
-        checkUser(userId);
-        checkUser(friendId);
-        log.debug("Поверка наличия пользователя c id = {} и пользователя с id = {} в методе getCommonFilms завершена",
+        userService.getUserById(userId);
+        userService.getUserById(friendId);
+        log.debug("Закончена проверка наличия пользователя c id = {} и пользователя с id = {} в методе getCommonFilms",
                 userId,
                 friendId);
         Collection<Film> films = filmStorage.getCommonFilms(userId, friendId);
@@ -139,15 +155,6 @@ public class FilmService {
                 .orElseThrow(() -> {
                     log.warn("Фильм с id = {} не найден", filmId);
                     return new NotFoundException(String.format("Фильм с id = %d не найден", filmId));
-                });
-    }
-
-    // Методе проверки наличия пользователя в базе данных
-    private User checkUser(Long userId) {
-        return userStorage.getUserById(userId)
-                .orElseThrow(() -> {
-                    log.warn("Пользователь c id = {} не найден", userId);
-                    return new NotFoundException(String.format("Пользователь с id = %d не найден", userId));
                 });
     }
 
