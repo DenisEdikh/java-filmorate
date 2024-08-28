@@ -33,9 +33,9 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable(value = "id") Long filmId) {
-        final Film film = filmService.getFilmById(filmId);
-        log.info("Возвращен фильм с id = {}", filmId);
+    public Film getFilmById(@PathVariable(value = "id") Long id) {
+        final Film film = filmService.getFilmById(id);
+        log.info("Возвращен фильм с id = {}", id);
         return film;
     }
 
@@ -67,8 +67,10 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopularFilms(@RequestParam(value = "count", defaultValue = "10") Long count) {
-        final Collection<Film> popularFilms = filmService.getPopularFilms(count);
+    public Collection<Film> getPopularFilms(@RequestParam(value = "count", defaultValue = "10") Long count,
+                                            @RequestParam(value = "genreId", required = false) Integer genreId,
+                                            @RequestParam(value = "year", required = false) Integer year) {
+        final Collection<Film> popularFilms = filmService.getPopularFilms(count, genreId, year);
         log.info("Возвращены популярные фильмы");
         return popularFilms;
     }
@@ -77,7 +79,7 @@ public class FilmController {
     public Collection<Film> getCommonFilms(@RequestParam(value = "userId") Long userId,
                                            @RequestParam(value = "friendId") Long friendId) {
         final Collection<Film> commonFilms = filmService.getCommonFilms(userId, friendId);
-        log.info("Возвращены популярные фильмы");
+        log.info("Возвращены общие фильмы");
         return commonFilms;
     }
 }
