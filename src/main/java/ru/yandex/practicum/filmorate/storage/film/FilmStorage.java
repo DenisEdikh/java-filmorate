@@ -8,11 +8,11 @@ import java.util.Optional;
 public interface FilmStorage {
     Collection<Film> getAllFilms();
 
-    Collection<Film> getPopularFilms(Long count);
+    Collection<Film> getPopularFilms(Long count, Integer genreId, Integer year);
 
     Collection<Film> getCommonFilms(Long userId, Long friendId);
 
-    Optional<Film> getFilmById(Long filmId);
+    Optional<Film> getFilmById(Long id);
 
     Film create(Film film);
 
