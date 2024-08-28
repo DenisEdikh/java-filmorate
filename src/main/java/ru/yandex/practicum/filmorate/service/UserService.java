@@ -38,29 +38,34 @@ public class UserService {
     public User update(User user) {
         log.debug("Начата проверка наличия у пользователя id");
         checkUserId(user);
-        log.debug("Начата проверка наличия пользователя c id = {} в БД", user.getId());
+        log.debug("Закончена проверка наличия у пользователя id");
+        log.debug("Начата проверка наличия пользователя c id = {} в БД в методе update", user.getId());
         getUserById(user.getId());
+        log.debug("Закончена проверка наличия пользователя c id = {} в БД в методе update", user.getId());
         return userStorage.update(checkName(user));
     }
-    // Метод удаления пользователя
 
+    // Метод удаления пользователя
     public void deleteUser(Long id) {
-        log.debug("Начата проверка наличия пользователя c id = {} в методе deleteUser", id);
+        log.debug("Начата проверка наличия пользователя c id = {} в БД в методе deleteUser", id);
         getUserById(id);
+        log.debug("Закончена проверка наличия пользователя c id = {} в БД в методе deleteUser", id);
         userStorage.delete(id);
     }
 
     public void addFriend(Long id, Long friendId) {
-        log.debug("Начата проверка наличия пользователя c id = {}, {} в методе addFriend", id, friendId);
+        log.debug("Начата проверка наличия пользователей c id = {}, {} в БД в методе addFriend", id, friendId);
         getUserById(id);
         getUserById(friendId);
+        log.debug("Закончена проверка наличия пользователей c id = {}, {} в БД в методе addFriend", id, friendId);
         userStorage.addFriend(id, friendId);
     }
 
     public void deleteFriend(Long id, Long friendId) {
-        log.debug("Начата проверка наличия пользователей c id = {}, {} в методе deleteFriend", id, friendId);
+        log.debug("Начата проверка наличия пользователей c id = {}, {} в БД в методе deleteFriend", id, friendId);
         getUserById(id);
         getUserById(friendId);
+        log.debug("Начата проверка наличия пользователей c id = {}, {} в БД в методе deleteFriend", id, friendId);
         if (userStorage.getFriendsUser(id).stream()
                 .map(User::getId)
                 .anyMatch(num -> Objects.equals(num, friendId))) {
@@ -82,8 +87,8 @@ public class UserService {
         getUserById(otherId);
         return userStorage.getCommonFriends(id, otherId);
     }
-    // Метод проверки наличия имени в юзере при запросе
 
+    // Метод проверки наличия имени в юзере при запросе
     private User checkName(User user) {
         if (Objects.isNull(user.getName())) {
             log.debug("У пользователя c id = {} отсутствует имя", user.getId());
@@ -92,6 +97,7 @@ public class UserService {
         return user;
     }
 
+    // Метод проверки наличия id у пользователя
     private void checkUserId(User user) {
         if (Objects.isNull(user.getId())) {
             log.warn("У пользователя {} отсутствует id", user);
