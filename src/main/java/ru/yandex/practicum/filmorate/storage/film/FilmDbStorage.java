@@ -28,9 +28,9 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public Optional<Film> getFilmById(Long filmId) {
+    public Optional<Film> getFilmById(Long id) {
         String findByIdQuery = "SELECT * FROM films WHERE id = ?";
-        return findOne(findByIdQuery, filmId);
+        return findOne(findByIdQuery, id);
     }
 
     @Override
@@ -99,15 +99,18 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> getPopularFilms(Long count) {
+    public Collection<Film> getPopularFilms(Long count, Integer genreId, Integer year) {
         String findPopularQuery = """
-                SELECT f.* FROM films f
-                LEFT JOIN likes l ON f.id = l.film_id
-                GROUP BY f.id
-                ORDER BY COUNT(l.user_id) DESC
-                LIMIT ?
-                """;
-        return findMany(findPopularQuery, count);
+            SELECT f.* FROM films f
+            LEFT JOIN likes l ON f.id = l.film_id
+            LEFT JOIN film_genre fg ON f.id = fg.film_id
+            WHERE (? IS NULL OR YEAR(f.release_date) = ?)
+            AND (? IS NULL OR fg.genre_id = ?)
+            GROUP BY f.id
+            ORDER BY COUNT(l.user_id) DESC
+            LIMIT ?
+            """;
+        return findMany(findPopularQuery, year, year, genreId, genreId, count);
     }
 
     @Override
