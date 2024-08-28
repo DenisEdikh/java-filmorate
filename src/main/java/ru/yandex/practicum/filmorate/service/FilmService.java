@@ -31,9 +31,7 @@ public class FilmService {
     private final MpaDbStorage mpaDbStorage;
 
     public Collection<Film> getPopularFilms(Long count) {
-        final Collection<Film> films = filmStorage.getPopularFilms().stream()
-                .limit(count)
-                .toList();
+        final Collection<Film> films = filmStorage.getPopularFilms(count);
         setFields(films);
         return films;
     }
@@ -55,6 +53,11 @@ public class FilmService {
         return filmStorage.update(film);
     }
 
+    public void deleteFilm(Long id) {
+        checkFilm(id);
+        filmStorage.deleteFilm(id);
+    }
+
     public Film getFilmById(Long filmId) {
         log.debug("Начата проверка наличия фильма c id = {} в методе FilmById", filmId);
         final Film film = checkFilm(filmId);
@@ -63,7 +66,7 @@ public class FilmService {
         final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(filmId);
         final Collection<User> users = userStorage.getUsersByFilmId(filmId);
         film.setMpa(mpa);
-        film.getGenres().addAll(genres);
+        film.addGenre(genres);
         return film;
     }
 

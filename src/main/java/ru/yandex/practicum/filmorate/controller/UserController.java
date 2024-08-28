@@ -30,6 +30,13 @@ public class UserController {
         return users;
     }
 
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) {
+        final User user = userService.getUserById(id);
+        log.info("Возвращен пользователь с id = {}", id);
+        return user;
+    }
+
     @PostMapping
     public User create(@Valid @RequestBody User user) {
         return userService.create(user);
@@ -38,6 +45,12 @@ public class UserController {
     @PutMapping
     public User update(@Valid @RequestBody User newUser) {
         return userService.update(newUser);
+    }
+
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable(value = "userId") Long id) {
+        userService.deleteUser(id);
+        log.info("Удален пользователь с id = {}", id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")

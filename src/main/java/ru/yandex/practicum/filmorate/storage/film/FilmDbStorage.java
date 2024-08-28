@@ -58,6 +58,29 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
+    public Film update(Film film) {
+        String updateFilmQuery = "UPDATE films " +
+                "SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? " +
+                "WHERE id = ?";
+        update(updateFilmQuery,
+                film.getName(),
+                film.getDescription(),
+                Date.valueOf(film.getReleaseDate()),
+                film.getDuration(),
+                film.getMpa().getId(),
+                film.getId());
+        log.info("Обновили фильм с id = {}", film.getId());
+        return film;
+    }
+
+    @Override
+    public void deleteFilm(Long id) {
+        String deleteFilmQuery = "DELETE FROM films WHERE id = ?";
+        update(deleteFilmQuery, id);
+        log.info("Удалили фильм с id =  {}", id);
+    }
+
+    @Override
     public void createLike(Long filmId, Long userId) {
         String insertLikeQuery = "INSERT INTO likes(film_id, user_id) VALUES (?, ?)";
         update(insertLikeQuery,
@@ -76,28 +99,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public Film update(Film film) {
-        String updateFilmQuery = "UPDATE films " +
-                "SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? " +
-                "WHERE id = ?";
-        update(updateFilmQuery,
-                film.getName(),
-                film.getDescription(),
-                Date.valueOf(film.getReleaseDate()),
-                film.getDuration(),
-                film.getMpa().getId(),
-                film.getId());
-        log.info("Обновили фильм с id = {}", film.getId());
-        return film;
-    }
-
-    @Override
-    public Collection<Film> getPopularFilms() {
-        String findPopularQuery = "SELECT f.* FROM films f " +
-                "JOIN likes l ON f.ID = l.film_id " +
-                "GROUP BY f.id " +
-                "ORDER BY COUNT(l.user_id) DESC";
-        return findMany(findPopularQuery);
+    public Collection<Film> getPopularFilms(Long count) {
+        String findPopularQuery = """
+                SELECT f.* FROM films f
+                LEFT JOIN likes l ON f.id = l.film_id
+                GROUP BY f.id
+                ORDER BY COUNT(l.user_id) DESC
+                LIMIT ?
+                """;
+        return findMany(findPopularQuery, count);
     }
 
     @Override

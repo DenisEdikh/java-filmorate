@@ -10,13 +10,15 @@ public interface UserStorage {
 
     Collection<User> getUsersByFilmId(Long filmId);
 
-    Optional<User> getUserById(Long userId);
+    Optional<User> getUserById(Long id);
 
     User create(User user);
 
     User update(User newUser);
 
-    void addFriend(Long userId, Long friendId);
+    void delete(Long id);
+
+    void addFriend(Long id, Long friendId);
 
     void deleteFriend(Long id, Long friendId);
 
