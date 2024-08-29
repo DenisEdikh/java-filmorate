@@ -14,6 +14,8 @@ public interface FilmStorage {
 
     Optional<Film> getFilmById(Long id);
 
+    Collection<Film> getRecommendedFilms(Long id);
+
     Film create(Film film);
 
     Film update(Film newFilm);

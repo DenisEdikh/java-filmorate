@@ -60,19 +60,19 @@ public class FilmService {
     }
 
     public void deleteFilm(Long id) {
-        log.debug("Начата проверка наличия фильма c id = {} в методе delete", id);
+        log.debug("Начата проверка наличия фильма c id = {} в БД в методе delete", id);
         checkFilm(id);
-        log.debug("Закончена проверка наличия фильма c id = {} в методе delete", id);
+        log.debug("Закончена проверка наличия фильма c id = {} в БД в методе delete", id);
         filmStorage.deleteFilm(id);
     }
 
     public Film getFilmById(Long id) {
-        log.debug("Начата проверка наличия фильма c id = {} в методе FilmById", id);
+        log.debug("Начата проверка наличия фильма c id = {} в БД в методе FilmById", id);
         final Film film = checkFilm(id);
-        log.debug("Закончена проверка наличия фильма c id = {} в методе FilmById", id);
-        log.debug("Начата проверка наличия Mpa с id = {} в методе FilmById", film.getMpa().getId());
+        log.debug("Закончена проверка наличия фильма c id = {} в БД в методе FilmById", id);
+        log.debug("Начата проверка наличия Mpa с id = {} в БД в методе FilmById", film.getMpa().getId());
         final Mpa mpa = checkMpa(film.getMpa().getId());
-        log.debug("Закончена проверка наличия Mpa с id = {} в методе FilmById", film.getMpa().getId());
+        log.debug("Закончена проверка наличия Mpa с id = {} в БД в методе FilmById", film.getMpa().getId());
         final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(id);
 //        final Collection<User> users = userStorage.getUsersByFilmId(id);
         film.setMpa(mpa);
@@ -81,24 +81,24 @@ public class FilmService {
     }
 
     public void addLike(Long filmId, Long userId) {
-        log.debug("Начата проверка наличия фильма c id = {} и пользователя с id = {} в методе addLike",
+        log.debug("Начата проверка наличия фильма c id = {} и пользователя с id = {} в БД в методе addLike",
                 filmId,
                 userId);
         checkFilm(filmId);
         userService.getUserById(userId);
-        log.debug("Закончена проверка наличия фильма c id = {} и пользователя с id = {} в методе addLike",
+        log.debug("Закончена проверка наличия фильма c id = {} и пользователя с id = {} в БД в методе addLike",
                 filmId,
                 userId);
         filmStorage.createLike(filmId, userId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
-        log.debug("Начата проверка наличия фильма c id = {} и пользователя с id = {} в методе deleteLike",
+        log.debug("Начата проверка наличия фильма c id = {} и пользователя с id = {} в БД в методе deleteLike",
                 filmId,
                 userId);
         checkFilm(filmId);
         userService.getUserById(userId);
-        log.debug("Закончена проверка наличия фильма c id = {} и пользователя с id = {} в методе deleteLike",
+        log.debug("Закончена проверка наличия фильма c id = {} и пользователя с id = {} в БД в методе deleteLike",
                 filmId,
                 userId);
         filmStorage.deleteLike(filmId, userId);
@@ -106,15 +106,27 @@ public class FilmService {
 
     // Метод возвращения общих фильмов у двух людей
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
-        log.debug("Начата проверка наличия пользователя c id = {} и пользователя с id = {} в методе getCommonFilms",
+        log.debug("Начата проверка наличия пользователя c id = {} и " +
+                        "пользователя с id = {} в БД в методе getCommonFilms",
                 userId,
                 friendId);
         userService.getUserById(userId);
         userService.getUserById(friendId);
-        log.debug("Закончена проверка наличия пользователя c id = {} и пользователя с id = {} в методе getCommonFilms",
+        log.debug("Закончена проверка наличия пользователя c id = {} и " +
+                        "пользователя с id = {} в БД в методе getCommonFilms",
                 userId,
                 friendId);
         Collection<Film> films = filmStorage.getCommonFilms(userId, friendId);
+        setFields(films);
+        return films;
+    }
+
+    // Метод по возвращению рекомендуемых фильмов к просмотру
+    public Collection<Film> getRecommendedFilms(Long id) {
+        log.debug("Начата проверка наличия пользователя с id = {} в БД методе getRecommendedFilms", id);
+        userService.getUserById(id);
+        log.debug("Закончена проверка наличия пользователя с id = {} в БД в методе getRecommendedFilms", id);
+        final Collection<Film> films = filmStorage.getRecommendedFilms(id);
         setFields(films);
         return films;
     }

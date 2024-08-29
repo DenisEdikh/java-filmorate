@@ -101,21 +101,21 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public Collection<Film> getPopularFilms(Long count, Integer genreId, Integer year) {
         String findPopularQuery = """
-            SELECT f.* FROM films f
-            LEFT JOIN likes l ON f.id = l.film_id
-            LEFT JOIN film_genre fg ON f.id = fg.film_id
-            WHERE (? IS NULL OR YEAR(f.release_date) = ?)
-            AND (? IS NULL OR fg.genre_id = ?)
-            GROUP BY f.id
-            ORDER BY COUNT(l.user_id) DESC
-            LIMIT ?
-            """;
+                SELECT f.* FROM films f
+                LEFT JOIN likes l ON f.id = l.film_id
+                LEFT JOIN film_genre fg ON f.id = fg.film_id
+                WHERE (? IS NULL OR YEAR(f.release_date) = ?)
+                AND (? IS NULL OR fg.genre_id = ?)
+                GROUP BY f.id
+                ORDER BY COUNT(l.user_id) DESC
+                LIMIT ?
+                """;
         return findMany(findPopularQuery, year, year, genreId, genreId, count);
     }
 
     @Override
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
-        String findCommonFilms = """
+        String findCommonFilmsQuery = """
                 SELECT f.* FROM films f
                 LEFT JOIN likes l1 ON f.id = l1.film_id
                 LEFT JOIN likes l2 ON f.id = l2.film_id
@@ -123,7 +123,26 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 GROUP BY l1.film_id
                 ORDER BY COUNT(l1.user_id) DESC
                 """;
-        return findMany(findCommonFilms, userId, friendId);
+        return findMany(findCommonFilmsQuery, userId, friendId);
     }
 
+    @Override
+    public Collection<Film> getRecommendedFilms(Long id) {
+        String findRecommendedFilmsQuery = """
+                SELECT f.*
+                FROM films f
+                         LEFT JOIN likes l ON f.id = l.film_id
+                         RIGHT JOIN (SELECT l.user_id, COUNT(l.film_id)
+                                     FROM likes l
+                                              RIGHT JOIN (SELECT film_id
+                                                          FROM likes
+                                                          WHERE user_id = ?) AS ul ON l.film_id = ul.film_id
+                                     WHERE l.user_id != ?
+                                     GROUP BY l.user_id
+                                     ORDER BY COUNT(l.film_id) DESC
+                                     LIMIT 1) AS ml ON ml.user_id = l.user_id
+                WHERE f.id NOT IN (SELECT film_id FROM likes WHERE user_id = ?)
+                """;
+        return findMany(findRecommendedFilmsQuery, id, id, id);
+    }
 }
