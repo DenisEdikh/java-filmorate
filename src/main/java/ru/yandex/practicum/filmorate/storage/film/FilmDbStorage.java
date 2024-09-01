@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.BaseDbStorage;
@@ -34,6 +35,20 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
+    public Collection<Film> getFilmsByDirectorId(Long id, String sort1, String sort2) {
+        String findByDirectorIdQuery = """
+                    SELECT f.* FROM films f
+                    LEFT JOIN film_director fd ON f.id = fd.film_id
+                    LEFT JOIN likes l ON f.id = l.film_id
+                    WHERE fd.director_id = ?
+                    GROUP BY f.id
+                    ORDER BY (CASE ? WHEN 'year' THEN YEAR(f.release_date) END) ASC,
+                    (CASE ? WHEN 'likes' THEN COUNT(l.user_id) END) DESC
+                """;
+        return findMany(findByDirectorIdQuery, id, sort1, sort2);
+    }
+
+    @Override
     public Film create(Film film) {
         String insertFilmQuery = "INSERT INTO films (name, " +
                 "description, " +
@@ -42,6 +57,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 "mpa_id) " +
                 "VALUES (?, ?, ?, ?, ?)";
         String insertGenresQuery = "INSERT INTO film_genre (film_id, genre_id) VALUES(?, ?)";
+        String insertDirectorsQuery = "INSERT INTO film_director (film_id, director_id) VALUES(?, ?)";
 
         final Long id = insert(insertFilmQuery,
                 film.getName(),
@@ -53,15 +69,21 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         for (Genre genre : film.getGenres()) {
             update(insertGenresQuery, id, genre.getId());
         }
+        for (Director director : film.getDirectors()) {
+            update(insertDirectorsQuery, id, director.getId());
+        }
         log.info("Добавили фильм с id = {}", id);
         return film;
     }
 
     @Override
     public Film update(Film film) {
-        String updateFilmQuery = "UPDATE films " +
-                "SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? " +
-                "WHERE id = ?";
+        String updateFilmQuery = """
+                UPDATE films
+                SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ?
+                WHERE id = ?
+                """;
+
         update(updateFilmQuery,
                 film.getName(),
                 film.getDescription(),
