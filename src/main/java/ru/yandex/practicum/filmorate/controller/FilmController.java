@@ -39,6 +39,15 @@ public class FilmController {
         return film;
     }
 
+    @GetMapping("/director/{directorId}")
+    public Collection<Film> getFilmsByDirectorId(@PathVariable(value = "directorId") Long directorId,
+                                                 @RequestParam(value = "sortBy", required = false)
+                                                 Collection<String> sort) {
+        final Collection<Film> films = filmService.getFilmsByDirectorId(directorId, sort);
+        log.info("Возвращены все фильмы режиссера");
+        return films;
+    }
+
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
         return filmService.create(film);

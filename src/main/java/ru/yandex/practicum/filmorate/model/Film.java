@@ -28,8 +28,13 @@ public class Film {
     @NotNull
     private Mpa mpa;
     private Set<Genre> genres = new HashSet<>();
+    private Set<Director> directors = new HashSet<>();
 
     public void addGenre(Collection<Genre> genres) {
         this.genres.addAll(genres);
+    }
+
+    public void addDirector(Collection<Director> directors) {
+        this.directors.addAll(directors);
     }
 }
