@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -15,6 +16,7 @@ import ru.yandex.practicum.filmorate.storage.MpaDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -26,6 +28,8 @@ public class FilmService {
     private final UserService userService;
     private final GenreDbStorage genreDbStorage;
     private final MpaDbStorage mpaDbStorage;
+    private final DirectorService directorService;
+    private final MpaService mpaService;
 
     public Collection<Film> getPopularFilms(Long count, Integer genreId, Integer year) {
         final Collection<Film> films = filmStorage.getPopularFilms(count, genreId, year);
@@ -39,9 +43,25 @@ public class FilmService {
         return films;
     }
 
+    public Collection<Film> getFilmsByDirectorId(Long directorId, Collection<String> sort) {
+        log.debug("Начата проверка наличия режиссера c id = {} в БД в методе getFilmsByDirectorId", directorId);
+        directorService.getDirectorById(directorId);
+        log.debug("Закончена проверка наличия режиссера c id = {} в БД в методе getFilmsByDirectorId", directorId);
+        Collection<Film> films = List.of();
+        for (String s : sort) {
+            films = switch (s) {
+                case "year" -> filmStorage.getFilmsByDirectorId(directorId, "year", "year");
+                case "likes" -> filmStorage.getFilmsByDirectorId(directorId, "likes", "likes");
+                default -> filmStorage.getFilmsByDirectorId(directorId, null, null);
+            };
+        }
+        setFields(films);
+        return films;
+    }
+
     public Film create(Film film) {
         log.debug("Начата проверка наличия рейтинга и жанров у фильма c id = {} в методе create", film.getId());
-        checkMpaAndGenres(film);
+        checkFieldsOfFilm(film);
         log.debug("Закончена проверка наличия рейтинга и жанров у фильма c id = {} в методе create", film.getId());
         return filmStorage.create(film);
     }
@@ -54,7 +74,7 @@ public class FilmService {
         checkFilm(film.getId());
         log.debug("Закончена проверка наличия фильма c id = {} в БД в методе update", film.getId());
         log.debug("Начата проверка наличия рейтинга и жанров у фильма c id = {} в методе update", film.getId());
-        checkMpaAndGenres(film);
+        checkFieldsOfFilm(film);
         log.debug("Закончена проверка наличия рейтинга и жанров у фильма c id = {} в методе update", film.getId());
         return filmStorage.update(film);
     }
@@ -71,12 +91,14 @@ public class FilmService {
         final Film film = checkFilm(id);
         log.debug("Закончена проверка наличия фильма c id = {} в БД в методе FilmById", id);
         log.debug("Начата проверка наличия Mpa с id = {} в БД в методе FilmById", film.getMpa().getId());
-        final Mpa mpa = checkMpa(film.getMpa().getId());
+        final Mpa mpa = mpaService.getMpaById(film.getMpa().getId());
         log.debug("Закончена проверка наличия Mpa с id = {} в БД в методе FilmById", film.getMpa().getId());
         final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(id);
+        final Collection<Director> directors = directorService.getDirectorsByFilmId(id);
 //        final Collection<User> users = userStorage.getUsersByFilmId(id);
         film.setMpa(mpa);
         film.addGenre(genres);
+        film.addDirector(directors);
         return film;
     }
 
@@ -131,15 +153,7 @@ public class FilmService {
         return films;
     }
 
-    private Mpa checkMpa(Integer mpaId) {
-        return mpaDbStorage.getMpaById(mpaId)
-                .orElseThrow(() -> {
-                    log.warn("Mpa c id = {} не найден", mpaId);
-                    return new NotFoundException(String.format("Mpa с id = %d не найден", mpaId));
-                });
-    }
-
-    private void checkMpaAndGenres(Film film) {
+    private void checkFieldsOfFilm(Film film) {
         mpaDbStorage.getMpaById(film.getMpa().getId())
                 .orElseThrow(() -> {
                     log.warn("Некорректный у Mpa id = {}", film.getMpa().getId());
@@ -151,6 +165,9 @@ public class FilmService {
                         log.warn("Некорректный у Genre id = {}", genre.getId());
                         return new ValidationException(String.format("Некорректный у Genre id = %d", genre.getId()));
                     });
+        }
+        for (Director director : film.getDirectors()) {
+            directorService.getDirectorById(director.getId());
         }
     }
 
@@ -173,9 +190,9 @@ public class FilmService {
     // Метод установки полей в фильме
     private void setFields(Collection<Film> films) {
         for (Film film : films) {
-            final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(film.getId());
-            film.addGenre(genres);
-            film.setMpa(checkMpa(film.getMpa().getId()));
+            film.addGenre(genreDbStorage.getGenresByFilmId(film.getId()));
+            film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
+            film.addDirector(directorService.getDirectorsByFilmId(film.getId()));
         }
     }
 }
