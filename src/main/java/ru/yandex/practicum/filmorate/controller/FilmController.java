@@ -48,6 +48,14 @@ public class FilmController {
         return films;
     }
 
+    @GetMapping("/search")
+    public Collection<Film> getFilmsBySearch(@RequestParam(value = "query") String query,
+                                             @RequestParam(value = "by") Collection<String> by) {
+        final Collection<Film> films = filmService.getFilmsBySearch(query, by);
+        log.info("Возвращены все фильмы по поиску");
+        return films;
+    }
+
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
         return filmService.create(film);

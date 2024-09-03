@@ -29,23 +29,77 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
+    public Collection<Film> getFilmsByNameAndDirectorSearch(String query) {
+        String findFilmsByNameAndDirectorQuery = """
+                SELECT f.* FROM films f
+                LEFT JOIN film_director fd ON f.id = fd.film_id
+                LEFT JOIN directors d ON fd.director_id = d.id
+                WHERE f.name LIKE CONCAT ('%', ?, '%')
+                OR d.name LIKE CONCAT ('%', ?, '%')
+                """;
+        return findMany(findFilmsByNameAndDirectorQuery, query, query);
+    }
+
+    @Override
+    public Collection<Film> getFilmsByNameSearch(String query) {
+        String findFilmsByNameQuery = """
+                SELECT * FROM films
+                WHERE name LIKE CONCAT ('%', ?, '%')
+                """;
+        return findMany(findFilmsByNameQuery, query);
+    }
+
+    @Override
+    public Collection<Film> getFilmsByDirectorSearch(String query) {
+        String findFilmsByDirectorQuery = """
+                SELECT f.* FROM films f
+                LEFT JOIN film_director fd ON f.id = fd.film_id
+                LEFT JOIN directors d ON fd.director_id = d.id
+                WHERE d.name LIKE CONCAT ('%', ?, '%')
+                """;
+        return findMany(findFilmsByDirectorQuery, query);
+    }
+
+    @Override
     public Optional<Film> getFilmById(Long id) {
         String findByIdQuery = "SELECT * FROM films WHERE id = ?";
         return findOne(findByIdQuery, id);
     }
 
     @Override
-    public Collection<Film> getFilmsByDirectorId(Long id, String sort1, String sort2) {
+    public Collection<Film> getFilmsByDirectorId(Long id) {
+        String findByDirectorIdQuery = """
+                    SELECT f.* FROM films f
+                    LEFT JOIN film_director fd ON f.id = fd.film_id
+                    WHERE fd.director_id = ?
+                """;
+        return findMany(findByDirectorIdQuery, id);
+    }
+
+    @Override
+    public Collection<Film> getFilmsByDirectorIdOrderByLikes(Long id) {
         String findByDirectorIdQuery = """
                     SELECT f.* FROM films f
                     LEFT JOIN film_director fd ON f.id = fd.film_id
                     LEFT JOIN likes l ON f.id = l.film_id
                     WHERE fd.director_id = ?
                     GROUP BY f.id
-                    ORDER BY (CASE ? WHEN 'year' THEN YEAR(f.release_date) END) ASC,
-                    (CASE ? WHEN 'likes' THEN COUNT(l.user_id) END) DESC
+                    ORDER BY COUNT(l.user_id)
+                    DESC
                 """;
-        return findMany(findByDirectorIdQuery, id, sort1, sort2);
+        return findMany(findByDirectorIdQuery, id);
+    }
+
+    @Override
+    public Collection<Film> getFilmsByDirectorIdOrderByYear(Long id) {
+        String findByDirectorIdQuery = """
+                    SELECT f.* FROM films f
+                    LEFT JOIN film_director fd ON f.id = fd.film_id
+                    LEFT JOIN likes l ON f.id = l.film_id
+                    WHERE fd.director_id = ?
+                    ORDER BY YEAR(f.release_date) ASC
+                """;
+        return findMany(findByDirectorIdQuery, id);
     }
 
     @Override

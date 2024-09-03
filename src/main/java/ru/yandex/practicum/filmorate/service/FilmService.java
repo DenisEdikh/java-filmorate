@@ -47,13 +47,30 @@ public class FilmService {
         log.debug("Начата проверка наличия режиссера c id = {} в БД в методе getFilmsByDirectorId", directorId);
         directorService.getDirectorById(directorId);
         log.debug("Закончена проверка наличия режиссера c id = {} в БД в методе getFilmsByDirectorId", directorId);
-        Collection<Film> films = List.of();
-        for (String s : sort) {
-            films = switch (s) {
-                case "year" -> filmStorage.getFilmsByDirectorId(directorId, "year", "year");
-                case "likes" -> filmStorage.getFilmsByDirectorId(directorId, "likes", "likes");
-                default -> filmStorage.getFilmsByDirectorId(directorId, null, null);
-            };
+        final Collection<Film> films;
+        if (sort.contains("year") && !sort.contains("likes")) {
+            films = filmStorage.getFilmsByDirectorIdOrderByYear(directorId);
+        } else if (sort.contains("likes") && !sort.contains("year")) {
+            films = filmStorage.getFilmsByDirectorIdOrderByLikes(directorId);
+        } else {
+            films = filmStorage.getFilmsByDirectorId(directorId);
+        }
+        setFields(films);
+        return films;
+    }
+
+    public Collection<Film> getFilmsBySearch(String query, Collection<String> by) {
+        log.debug("Пробуем получить фильм по запросу из БД в методе getFilmsBySearch");
+        final Collection<Film> films;
+        if (by.containsAll(List.of("title", "director"))) {
+            films = filmStorage.getFilmsByNameAndDirectorSearch(query);
+        } else if (by.contains("title") && !by.contains("director")) {
+            films = filmStorage.getFilmsByNameSearch(query);
+        } else if (by.contains("director") && !by.contains("title")) {
+            films = filmStorage.getFilmsByDirectorSearch(query);
+        } else {
+            log.warn("Необходимо проверить критерии поиска в методе getFilmsBySearch");
+            throw new ConditionsNotMetException("Необходимо проверить критерии поиска в методе getFilmsBySearch");
         }
         setFields(films);
         return films;
