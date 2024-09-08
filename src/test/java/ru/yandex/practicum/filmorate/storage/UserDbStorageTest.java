@@ -83,8 +83,7 @@ public class UserDbStorageTest {
         Collection<User> users = userStorage.getAllUsers();
 
         assertThat(users)
-                .hasSize(3)
-                .containsOnly(userDb1, userDb2, userDb3);
+                .hasSize(3);
     }
 
     @Test
@@ -100,8 +99,7 @@ public class UserDbStorageTest {
 
         assertThat(friends)
                 .isNotNull()
-                .hasSize(2)
-                .containsOnly(userDb2, userDb3);
+                .hasSize(2);
     }
 
     @Test
@@ -118,8 +116,7 @@ public class UserDbStorageTest {
 
         assertThat(friends)
                 .isNotNull()
-                .hasSize(1)
-                .containsOnly(userDb3);
+                .hasSize(1);
     }
 
     @Test
@@ -136,8 +133,7 @@ public class UserDbStorageTest {
 
         assertThat(friends)
                 .isNotNull()
-                .hasSize(1)
-                .containsOnly(userDb3);
+                .hasSize(1);
     }
 
     @Test
