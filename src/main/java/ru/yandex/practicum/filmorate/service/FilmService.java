@@ -196,7 +196,7 @@ public class FilmService {
     }
 
     // Методе проверки наличия фильма в базе данных
-    private Film checkFilm(Long filmId) {
+    Film checkFilm(Long filmId) {
         return filmStorage.getFilmById(filmId)
                 .orElseThrow(() -> {
                     log.warn("Фильм с id = {} не найден", filmId);
