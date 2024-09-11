@@ -9,6 +9,7 @@ drop table if exists directors cascade;
 drop table if exists film_director cascade;
 drop table if exists reviews cascade;
 drop table if exists useful cascade;
+drop table if exists events cascade;
 
 CREATE TABLE IF NOT EXISTS mpa
 (
@@ -90,4 +91,14 @@ CREATE TABLE IF NOT EXISTS useful
     user_id   bigint NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     l_d       int    NOT NULL,
     PRIMARY KEY (review_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS events
+(
+    timestamp  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    user_id    bigint    NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    event_type int       NOT NULL,
+    operation  int       NOT NULL,
+    id         bigint    NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    entity_id  bigint    NOT NULL
 );
