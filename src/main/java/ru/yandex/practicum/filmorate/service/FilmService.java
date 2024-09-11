@@ -8,9 +8,12 @@ import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.Operation;
+import ru.yandex.practicum.filmorate.storage.EventDbStorage;
 import ru.yandex.practicum.filmorate.storage.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.MpaDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -25,11 +28,12 @@ import java.util.Objects;
 public class FilmService {
     @Qualifier("filmDbStorage")
     private final FilmStorage filmStorage;
-    private final UserService userService;
     private final GenreDbStorage genreDbStorage;
     private final MpaDbStorage mpaDbStorage;
     private final DirectorService directorService;
     private final MpaService mpaService;
+    private final UserService userService;
+    private final EventDbStorage eventDbStorage;
 
     public Collection<Film> getPopularFilms(Long count, Integer genreId, Integer year) {
         final Collection<Film> films = filmStorage.getPopularFilms(count, genreId, year);
@@ -129,6 +133,7 @@ public class FilmService {
                 filmId,
                 userId);
         filmStorage.createLike(filmId, userId);
+        eventDbStorage.create(userId, EventType.LIKE, Operation.ADD, filmId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
@@ -141,6 +146,7 @@ public class FilmService {
                 filmId,
                 userId);
         filmStorage.deleteLike(filmId, userId);
+        eventDbStorage.create(userId, EventType.LIKE, Operation.REMOVE, filmId);
     }
 
     // Метод возвращения общих фильмов у двух людей
