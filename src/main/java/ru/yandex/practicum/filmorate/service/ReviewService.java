@@ -5,7 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.storage.EventDbStorage;
 import ru.yandex.practicum.filmorate.storage.ReviewDbStorage;
 
 import java.util.Collection;
@@ -16,6 +19,7 @@ import java.util.Objects;
 @Slf4j
 public class ReviewService {
     private final ReviewDbStorage reviewDbStorage;
+    private final EventDbStorage eventDbStorage;
     private final FilmService filmService;
     private final UserService userService;
 
@@ -25,7 +29,9 @@ public class ReviewService {
         checkFieldsReview(null, review.getUserId(), review.getFilmId());
         log.debug("Завершена проверка наличия пользователя, фильма у отзыва с Id = {} в методе create",
                 review.getReviewId());
-        return reviewDbStorage.create(review);
+        final Review savedReview = reviewDbStorage.create(review);
+        eventDbStorage.create(review.getUserId(), EventType.REVIEW, Operation.ADD, review.getReviewId());
+        return savedReview;
     }
 
     public Review update(Review review) {
@@ -37,14 +43,17 @@ public class ReviewService {
         checkFieldsReview(review.getReviewId(), review.getUserId(), review.getFilmId());
         log.debug("Завершена проверка наличия отзыва, пользователя и фильма у отзыва с Id = {} в методе update",
                 review.getReviewId());
-        return reviewDbStorage.update(review);
+        final Review savedReview = reviewDbStorage.update(review);
+        eventDbStorage.create(review.getUserId(), EventType.REVIEW, Operation.UPDATE, review.getReviewId());
+        return savedReview;
     }
 
     public void delete(Long id) {
         log.debug("Начата проверка наличия отзыва Id = {} в методе delete", id);
-        checkFieldsReview(id, null, null);
+        final Review savedReview = getReviewById(id);
         log.debug("Завершена проверка наличия отзыва Id = {} в методе delete", id);
         reviewDbStorage.delete(id);
+        eventDbStorage.create(savedReview.getUserId(), EventType.REVIEW, Operation.REMOVE, id);
     }
 
     public Review getReviewById(Long id) {

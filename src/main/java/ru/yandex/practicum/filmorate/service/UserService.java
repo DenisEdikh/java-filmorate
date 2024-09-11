@@ -6,7 +6,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.EventDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
@@ -18,6 +21,7 @@ import java.util.Objects;
 public class UserService {
     @Qualifier("userDbStorage")
     private final UserStorage userStorage;
+    private final EventDbStorage eventStorage;
 
     public Collection<User> getAllUsers() {
         return userStorage.getAllUsers();
@@ -59,6 +63,7 @@ public class UserService {
         getUserById(friendId);
         log.debug("Закончена проверка наличия пользователей c id = {}, {} в БД в методе addFriend", id, friendId);
         userStorage.addFriend(id, friendId);
+        eventStorage.create(id, EventType.FRIEND, Operation.ADD, friendId);
     }
 
     public void deleteFriend(Long id, Long friendId) {
@@ -71,6 +76,7 @@ public class UserService {
                 .anyMatch(num -> Objects.equals(num, friendId))) {
             log.debug("У пользователя с id = {} есть друг с id = {}", id, friendId);
             userStorage.deleteFriend(id, friendId);
+            eventStorage.create(id, EventType.FRIEND, Operation.REMOVE, friendId);
         }
     }
 

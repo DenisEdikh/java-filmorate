@@ -25,31 +25,40 @@ public class DirectorController {
 
     @GetMapping
     public Collection<Director> getAllDirectors() {
+        log.info("Начинаем получение всех режиссеров");
         final Collection<Director> directors = directorService.getAllDirectors();
-        log.info("Возвращены все директора");
+        log.info("Закончено получение всех режиссеров");
         return directors;
     }
 
     @GetMapping("{id}")
     public Director getDirectorById(@PathVariable(value = "id") Long id) {
+        log.info("Начинаем получение режиссера с id = {}", id);
         final Director director = directorService.getDirectorById(id);
-        log.info("Возвращен директор с id = {}", id);
+        log.info("Закончено получение режиссера с id = {}", id);
         return director;
     }
 
     @PostMapping
     public Director createDirector(@Valid @RequestBody Director director) {
-        return directorService.create(director);
+        log.info("Начинаем добавление режиссера");
+        final Director savedDirector = directorService.create(director);
+        log.info("Закончено добавление режиссера");
+        return savedDirector;
     }
 
     @PutMapping
     public Director updateDirector(@Valid @RequestBody Director newDirector) {
-        return directorService.update(newDirector);
+        log.info("Начинаем обновление режиссера");
+        final Director savedDirector = directorService.update(newDirector);
+        log.info("Закончено обновление режиссера");
+        return savedDirector;
     }
 
     @DeleteMapping("{id}")
     public void deleteDirector(@PathVariable(value = "id") Long id) {
+        log.info("Начинаем удаление режиссера");
         directorService.deleteDirector(id);
+        log.info("Закончено удаление режиссера");
     }
-
 }

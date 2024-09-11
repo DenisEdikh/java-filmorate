@@ -21,15 +21,17 @@ public class MpaController {
 
     @GetMapping
     public Collection<Mpa> getAllMpa() {
+        log.info("Начинаем получение всех рейтингов");
         final Collection<Mpa> mpaes = mpaService.getAllMpa();
-        log.info("Возвращены все рейтинги");
+        log.info("Закончено получение всех рейтингов");
         return mpaes;
     }
 
     @GetMapping("/{id}")
     public Mpa getMpaById(@PathVariable(value = "id") Integer id) {
+        log.info("Начинаем получение рейтинга по id = {}", id);
         final Mpa mpa = mpaService.getMpaById(id);
-        log.info("Возвращен рейтинг с id = {}", id);
+        log.info("Закончено получение рейтинга по id = {}", id);
         return mpa;
     }
 }

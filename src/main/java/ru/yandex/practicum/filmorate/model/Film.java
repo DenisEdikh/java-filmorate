@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.validators.DateValidation;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Setter
@@ -33,7 +32,7 @@ public class Film {
     private Integer duration;
     @NotNull
     private Mpa mpa;
-    private Set<Genre> genres = new LinkedHashSet<>();
+    private Set<Genre> genres = new HashSet<>();
     private Set<Director> directors = new HashSet<>();
 
     public void addGenre(Collection<Genre> genres) {
