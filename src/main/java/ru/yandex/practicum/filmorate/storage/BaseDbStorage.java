@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.exception.InternalServerException;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -42,9 +43,9 @@ public class BaseDbStorage<T> {
             return ps;
         }, keyHolder);
 
-        Long id = keyHolder.getKeyAs(Long.class);
-        if (Objects.nonNull(id)) {
-            return id;
+        Map<String, Object> keys = keyHolder.getKeys();
+        if (Objects.nonNull(keys)) {
+            return (Long) keys.get("id");
         } else {
             throw new InternalServerException("Не удалось сохранить данные");
         }
