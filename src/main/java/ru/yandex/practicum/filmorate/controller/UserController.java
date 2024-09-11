@@ -50,7 +50,7 @@ public class UserController {
         log.info("Начинаем добавление пользователя");
         final User savedUser = userService.create(user);
         log.info("Закончено добавление пользователя");
-        return userService.create(user);
+        return savedUser;
     }
 
     @PutMapping
