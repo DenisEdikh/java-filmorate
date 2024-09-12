@@ -25,8 +25,12 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
     }
 
     public Collection<Genre> getGenresByFilmId(Long filmId) {
-        String findByFilmIdQuery = "SELECT g.* FROM genres g JOIN film_genre fg " +
-                "ON g.id = fg.genre_id WHERE film_id = ? ORDER BY g.id";
+        String findByFilmIdQuery = """
+                SELECT g.* FROM genres g
+                JOIN film_genre fg ON g.id = fg.genre_id
+                WHERE film_id = ?
+                ORDER BY g.id
+                """;
         return findMany(findByFilmIdQuery, filmId);
     }
 }

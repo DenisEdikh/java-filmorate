@@ -1,15 +1,13 @@
 package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(of = "id")
-public class Genre {
-    @NotNull
-    private Integer id;
-    @NotBlank
+public class Director {
+    private Long id;
+    @NotBlank(message = "Имя не может быть пустым")
     private String name;
 }

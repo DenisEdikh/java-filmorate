@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -17,6 +18,7 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
+@TestPropertySource(locations = "classpath:application-test.properties")
 @Transactional
 public class FilmDbStorageTest {
     @Qualifier("filmDbStorage")
@@ -49,7 +52,7 @@ public class FilmDbStorageTest {
         mpa1.setId(4);
         film1.setMpa(mpa1);
         genre1.setId(4);
-        film1.getGenres().add(genre1);
+        film1.addGenres(List.of(genre1));
 
         film2.setName("Terminator 2");
         film2.setDescription("Description 2");
@@ -58,7 +61,7 @@ public class FilmDbStorageTest {
         mpa2.setId(4);
         film2.setMpa(mpa2);
         genre2.setId(4);
-        film2.getGenres().add(genre2);
+        film2.addGenres(List.of(genre2));
 
         film3.setName("HomeAlone");
         film3.setDescription("Description 3");
@@ -67,8 +70,7 @@ public class FilmDbStorageTest {
         mpa3.setId(1);
         film3.setMpa(mpa3);
         genre3.setId(2);
-        film3.getGenres().add(genre2);
-        film3.getGenres().add(genre3);
+        film3.addGenres(List.of(genre2, genre3));
     }
 
     @Test

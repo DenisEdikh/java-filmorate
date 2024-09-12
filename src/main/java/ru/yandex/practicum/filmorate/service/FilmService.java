@@ -7,17 +7,25 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.Operation;
+import ru.yandex.practicum.filmorate.storage.EventDbStorage;
 import ru.yandex.practicum.filmorate.storage.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.MpaDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -25,94 +33,174 @@ import java.util.Objects;
 public class FilmService {
     @Qualifier("filmDbStorage")
     private final FilmStorage filmStorage;
-    @Qualifier("userDbStorage")
-    private final UserStorage userStorage;
     private final GenreDbStorage genreDbStorage;
     private final MpaDbStorage mpaDbStorage;
+    private final DirectorService directorService;
+    private final MpaService mpaService;
+    private final UserService userService;
+    private final EventDbStorage eventDbStorage;
 
-    public Collection<Film> getPopularFilms(Long count) {
-        final Collection<Film> films = filmStorage.getPopularFilms().stream()
-                .limit(count)
-                .toList();
-        for (Film film : films) {
-            final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(film.getId());
-            film.getGenres().addAll(genres);
-            film.setMpa(checkMpa(film.getMpa().getId()));
-        }
+    public Collection<Film> getPopularFilms(Long count, Integer genreId, Integer year) {
+        final Collection<Film> films = filmStorage.getPopularFilms(count, genreId, year);
+        setFields(films);
         return films;
     }
 
     public Collection<Film> getAllFilms() {
         final Collection<Film> films = filmStorage.getAllFilms();
-        for (Film film : films) {
-            final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(film.getId());
-            film.getGenres().addAll(genres);
-            film.setMpa(checkMpa(film.getMpa().getId()));
+        setFields(films);
+        return films;
+    }
+
+    public Collection<Film> getFilmsByDirectorId(Long directorId, Collection<String> sort) {
+        log.debug("Начата проверка наличия режиссера c id = {} в БД в методе getFilmsByDirectorId", directorId);
+        directorService.getDirectorById(directorId);
+        log.debug("Закончена проверка наличия режиссера c id = {} в БД в методе getFilmsByDirectorId", directorId);
+        final Collection<Film> films;
+        if (sort.contains("year") && !sort.contains("likes")) {
+            films = filmStorage.getFilmsByDirectorIdOrderByYear(directorId);
+        } else if (sort.contains("likes") && !sort.contains("year")) {
+            films = filmStorage.getFilmsByDirectorIdOrderByLikes(directorId);
+        } else {
+            films = filmStorage.getFilmsByDirectorId(directorId);
         }
+        setFields(films);
+        return films;
+    }
+
+    public Collection<Film> getFilmsBySearch(String query, Collection<String> by) {
+        log.debug("Пробуем получить фильм по запросу из БД в методе getFilmsBySearch");
+        final Collection<Film> films;
+        if (by.containsAll(List.of("title", "director"))) {
+            films = filmStorage.getFilmsByNameAndDirectorSearch(query);
+        } else if (by.contains("title") && !by.contains("director")) {
+            films = filmStorage.getFilmsByNameSearch(query);
+        } else if (by.contains("director") && !by.contains("title")) {
+            films = filmStorage.getFilmsByDirectorSearch(query);
+        } else {
+            log.warn("Необходимо проверить критерии поиска в методе getFilmsBySearch");
+            throw new ConditionsNotMetException("Необходимо проверить критерии поиска в методе getFilmsBySearch");
+        }
+        setFields(films);
         return films;
     }
 
     public Film create(Film film) {
-        checkMpaAndGenres(film);
+        log.debug("Начата проверка наличия рейтинга и жанров у фильма c id = {} в методе create", film.getId());
+        checkFieldsOfFilm(film);
+        log.debug("Закончена проверка наличия рейтинга и жанров у фильма c id = {} в методе create", film.getId());
         return filmStorage.create(film);
     }
 
     public Film update(Film film) {
+        log.debug("Начата проверка наличия id у фильма в методе update");
         checkFilmId(film);
-        checkMpaAndGenres(film);
+        log.debug("Закончена проверка наличия id у фильма в методе update");
+        log.debug("Начата проверка наличия фильма c id = {} в БД в методе update", film.getId());
+        checkFilm(film.getId());
+        log.debug("Закончена проверка наличия фильма c id = {} в БД в методе update", film.getId());
+        log.debug("Начата проверка наличия рейтинга и жанров у фильма c id = {} в методе update", film.getId());
+        checkFieldsOfFilm(film);
+        log.debug("Закончена проверка наличия рейтинга и жанров у фильма c id = {} в методе update", film.getId());
+        correctDuplicates(film);
         return filmStorage.update(film);
     }
 
-    public Film getFilmById(Long filmId) {
-        log.debug("Начата проверка наличия фильма c id = {} в методе FilmById", filmId);
-        final Film film = checkFilm(filmId);
-        log.debug("Начата проверка наличия Mpa с id = {} в методе FilmById", film.getMpa().getId());
-        final Mpa mpa = checkMpa(film.getMpa().getId());
-        final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(filmId);
-        final Collection<User> users = userStorage.getUsersByFilmId(filmId);
+    public void deleteFilm(Long id) {
+        log.debug("Начата проверка наличия фильма c id = {} в БД в методе delete", id);
+        checkFilm(id);
+        log.debug("Закончена проверка наличия фильма c id = {} в БД в методе delete", id);
+        filmStorage.deleteFilm(id);
+    }
+
+    public Film getFilmById(Long id) {
+        log.debug("Начата проверка наличия фильма c id = {} в БД в методе FilmById", id);
+        final Film film = checkFilm(id);
+        log.debug("Закончена проверка наличия фильма c id = {} в БД в методе FilmById", id);
+        log.debug("Начата проверка наличия Mpa с id = {} в БД в методе FilmById", film.getMpa().getId());
+        final Mpa mpa = mpaService.getMpaById(film.getMpa().getId());
+        log.debug("Закончена проверка наличия Mpa с id = {} в БД в методе FilmById", film.getMpa().getId());
         film.setMpa(mpa);
-        film.getGenres().addAll(genres);
+        film.addGenres(genreDbStorage.getGenresByFilmId(id));
+        film.addDirectors(directorService.getDirectorsByFilmId(id));
         return film;
     }
 
     public void addLike(Long filmId, Long userId) {
-        log.debug("Начата проверка наличия фильма c id = {} и пользователя с id = {} в методе addLike",
+        log.debug("Начата проверка наличия фильма c id = {} и пользователя с id = {} в БД в методе addLike",
                 filmId,
                 userId);
         checkFilm(filmId);
-        checkUser(userId);
+        userService.getUserById(userId);
+        log.debug("Закончена проверка наличия фильма c id = {} и пользователя с id = {} в БД в методе addLike",
+                filmId,
+                userId);
         filmStorage.createLike(filmId, userId);
+        eventDbStorage.create(userId, EventType.LIKE, Operation.ADD, filmId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
-        log.debug("Начата проверка наличия фильма c id = {} и пользователя с id = {} в методе deleteLike",
+        log.debug("Начата проверка наличия фильма c id = {} и пользователя с id = {} в БД в методе deleteLike",
                 filmId,
                 userId);
         checkFilm(filmId);
-        checkUser(userId);
+        userService.getUserById(userId);
+        log.debug("Закончена проверка наличия фильма c id = {} и пользователя с id = {} в БД в методе deleteLike",
+                filmId,
+                userId);
         filmStorage.deleteLike(filmId, userId);
+        eventDbStorage.create(userId, EventType.LIKE, Operation.REMOVE, filmId);
     }
 
-    private Mpa checkMpa(Integer mpaId) {
-        return mpaDbStorage.getMpaById(mpaId)
-                .orElseThrow(() -> {
-                    log.warn("Mpa c id = {} не найден", mpaId);
-                    return new NotFoundException(String.format("Mpa с id = %d не найден", mpaId));
-                });
+    // Метод возвращения общих фильмов у двух людей
+    public Collection<Film> getCommonFilms(Long userId, Long friendId) {
+        log.debug("Начата проверка наличия пользователя c id = {} и " +
+                        "пользователя с id = {} в БД в методе getCommonFilms",
+                userId,
+                friendId);
+        userService.getUserById(userId);
+        userService.getUserById(friendId);
+        log.debug("Закончена проверка наличия пользователя c id = {} и " +
+                        "пользователя с id = {} в БД в методе getCommonFilms",
+                userId,
+                friendId);
+        Collection<Film> films = filmStorage.getCommonFilms(userId, friendId);
+        setFields(films);
+        return films;
     }
 
-    private void checkMpaAndGenres(Film film) {
-        mpaDbStorage.getMpaById(film.getMpa().getId())
-                .orElseThrow(() -> {
-                    log.warn("Некорректный у Mpa id = {}", film.getMpa().getId());
-                    return new ValidationException(String.format("Некорректный у Mpa id = %d", film.getMpa().getId()));
-                });
-        for (Genre genre : film.getGenres()) {
-            genreDbStorage.getGenreById(genre.getId())
+    // Метод по возвращению рекомендуемых фильмов к просмотру
+    public Collection<Film> getRecommendedFilms(Long id) {
+        log.debug("Начата проверка наличия пользователя с id = {} в БД методе getRecommendedFilms", id);
+        userService.getUserById(id);
+        log.debug("Закончена проверка наличия пользователя с id = {} в БД в методе getRecommendedFilms", id);
+        final Collection<Film> films = filmStorage.getRecommendedFilms(id);
+        setFields(films);
+        return films;
+    }
+
+    private void checkFieldsOfFilm(Film film) {
+        if (Objects.nonNull(film.getMpa().getId())) {
+            mpaDbStorage.getMpaById(film.getMpa().getId())
                     .orElseThrow(() -> {
-                        log.warn("Некорректный у Genre id = {}", genre.getId());
-                        return new ValidationException(String.format("Некорректный у Genre id = %d", genre.getId()));
+                        log.warn("Некорректный у Mpa id = {}", film.getMpa().getId());
+                        return new ValidationException(String.format("Некорректный у Mpa id = %d", film.getMpa().getId()));
                     });
+        }
+        if (Objects.nonNull(film.getGenres()) && !film.getGenres().isEmpty()) {
+            for (Genre genre : film.getGenres()) {
+                genreDbStorage.getGenreById(genre.getId())
+                        .orElseThrow(() -> {
+                            log.warn("Некорректный у Genre id = {}", genre.getId());
+                            return new ValidationException(String.format("Некорректный у Genre id = %d", genre.getId()));
+                        });
+            }
+        }
+        if (Objects.nonNull(film.getDirectors()) && !film.getDirectors().isEmpty()) {
+            film.setDirectors(new LinkedHashSet<>(film.getDirectors()));
+            for (Director director : film.getDirectors()) {
+                directorService.getDirectorById(director.getId());
+            }
         }
     }
 
@@ -123,7 +211,8 @@ public class FilmService {
         }
     }
 
-    private Film checkFilm(Long filmId) {
+    // Методе проверки наличия фильма в базе данных
+    Film checkFilm(Long filmId) {
         return filmStorage.getFilmById(filmId)
                 .orElseThrow(() -> {
                     log.warn("Фильм с id = {} не найден", filmId);
@@ -131,11 +220,31 @@ public class FilmService {
                 });
     }
 
-    private User checkUser(Long userId) {
-        return userStorage.getUserById(userId)
-                .orElseThrow(() -> {
-                    log.warn("Пользователь c id = {} не найден", userId);
-                    return new NotFoundException(String.format("Пользователь с id = %d не найден", userId));
-                });
+    // Метод установки полей в фильме
+    private void setFields(Collection<Film> films) {
+        for (Film film : films) {
+            film.addGenres(genreDbStorage.getGenresByFilmId(film.getId()));
+            film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
+            film.addDirectors(directorService.getDirectorsByFilmId(film.getId()));
+        }
+    }
+
+    private void correctDuplicates(Film film) {
+        if (Objects.nonNull(film.getGenres())) {
+            Set<Genre> genres = film.getGenres().stream()
+                    .sorted(Comparator.comparing(Genre::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            film.addGenres(genres);
+        } else {
+            film.addGenres(Collections.emptyList());
+        }
+        if (Objects.nonNull(film.getDirectors())) {
+            Set<Director> directors = film.getDirectors().stream()
+                    .sorted(Comparator.comparing(Director::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            film.addDirectors(directors);
+        } else {
+            film.addDirectors(Collections.emptyList());
+        }
     }
 }
