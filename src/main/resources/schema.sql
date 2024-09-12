@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS useful
 (
     review_id bigint NOT NULL REFERENCES reviews (id) ON DELETE CASCADE,
     user_id   bigint NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    l_d       int    NOT NULL,
+    l_d       int    NOT NULL DEFAULT 0,
     PRIMARY KEY (review_id, user_id)
 );
 

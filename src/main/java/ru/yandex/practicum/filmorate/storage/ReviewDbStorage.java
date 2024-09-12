@@ -24,6 +24,8 @@ public class ReviewDbStorage extends BaseDbStorage<Review> {
                 review.getUserId(),
                 review.getFilmId());
         review.setReviewId(id);
+        String insertReviewUsefulDefaultQuery = "INSERT INTO useful (review_id, user_id) VALUES (?, ?)";
+        update(insertReviewUsefulDefaultQuery, id, review.getUserId());
         log.info("Добавили отзыв c id = {}", id);
         return review;
     }
@@ -46,7 +48,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> {
 
     public Optional<Review> getReviewById(Long id) {
         String findByIdQuery = """
-                SELECT r.*, SUM(u.l_d) as useful FROM reviews r
+                SELECT r.*, SUM(u.l_d) AS useful FROM reviews r
                 LEFT JOIN useful u ON r.id = u.review_id
                 WHERE r.id = ?
                 GROUP BY r.id
