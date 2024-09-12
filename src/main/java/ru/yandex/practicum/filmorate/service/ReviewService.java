@@ -43,8 +43,9 @@ public class ReviewService {
         checkFieldsReview(review.getReviewId(), review.getUserId(), review.getFilmId());
         log.debug("Завершена проверка наличия отзыва, пользователя и фильма у отзыва с Id = {} в методе update",
                 review.getReviewId());
-        final Review savedReview = reviewDbStorage.update(review);
-        eventDbStorage.create(review.getUserId(), EventType.REVIEW, Operation.UPDATE, review.getReviewId());
+        reviewDbStorage.update(review);
+        final Review savedReview = getReviewById(review.getReviewId());
+        eventDbStorage.create(savedReview.getUserId(), EventType.REVIEW, Operation.UPDATE, savedReview.getReviewId());
         return savedReview;
     }
 
