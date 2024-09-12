@@ -96,7 +96,7 @@ public class UserService {
 
     // Метод проверки наличия имени в юзере при запросе
     private User checkName(User user) {
-        if (Objects.isNull(user.getName())) {
+        if (user.getName().isBlank()) {
             log.debug("У пользователя c id = {} отсутствует имя", user.getId());
             user.setName(user.getLogin());
         }
