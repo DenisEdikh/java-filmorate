@@ -57,4 +57,8 @@ public class BaseDbStorage<T> {
             throw new InternalServerException("Не удалось обновить данные");
         }
     }
+
+    protected boolean delete(String query, Object... params) {
+        return jdbc.update(query, params) > 0;
+    }
 }
