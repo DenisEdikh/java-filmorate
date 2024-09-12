@@ -19,8 +19,13 @@ import ru.yandex.practicum.filmorate.storage.MpaDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -97,6 +102,7 @@ public class FilmService {
         log.debug("Начата проверка наличия рейтинга и жанров у фильма c id = {} в методе update", film.getId());
         checkFieldsOfFilm(film);
         log.debug("Закончена проверка наличия рейтинга и жанров у фильма c id = {} в методе update", film.getId());
+        correctDuplicates(film);
         return filmStorage.update(film);
     }
 
@@ -114,12 +120,9 @@ public class FilmService {
         log.debug("Начата проверка наличия Mpa с id = {} в БД в методе FilmById", film.getMpa().getId());
         final Mpa mpa = mpaService.getMpaById(film.getMpa().getId());
         log.debug("Закончена проверка наличия Mpa с id = {} в БД в методе FilmById", film.getMpa().getId());
-        final Collection<Genre> genres = genreDbStorage.getGenresByFilmId(id);
-        final Collection<Director> directors = directorService.getDirectorsByFilmId(id);
-//        final Collection<User> users = userStorage.getUsersByFilmId(id);
         film.setMpa(mpa);
-        film.addGenre(genres);
-        film.addDirector(directors);
+        film.addGenres(genreDbStorage.getGenresByFilmId(id));
+        film.addDirectors(directorService.getDirectorsByFilmId(id));
         return film;
     }
 
@@ -177,20 +180,27 @@ public class FilmService {
     }
 
     private void checkFieldsOfFilm(Film film) {
-        mpaDbStorage.getMpaById(film.getMpa().getId())
-                .orElseThrow(() -> {
-                    log.warn("Некорректный у Mpa id = {}", film.getMpa().getId());
-                    return new ValidationException(String.format("Некорректный у Mpa id = %d", film.getMpa().getId()));
-                });
-        for (Genre genre : film.getGenres()) {
-            genreDbStorage.getGenreById(genre.getId())
+        if (Objects.nonNull(film.getMpa().getId())) {
+            mpaDbStorage.getMpaById(film.getMpa().getId())
                     .orElseThrow(() -> {
-                        log.warn("Некорректный у Genre id = {}", genre.getId());
-                        return new ValidationException(String.format("Некорректный у Genre id = %d", genre.getId()));
+                        log.warn("Некорректный у Mpa id = {}", film.getMpa().getId());
+                        return new ValidationException(String.format("Некорректный у Mpa id = %d", film.getMpa().getId()));
                     });
         }
-        for (Director director : film.getDirectors()) {
-            directorService.getDirectorById(director.getId());
+        if (Objects.nonNull(film.getGenres()) && !film.getGenres().isEmpty()) {
+            for (Genre genre : film.getGenres()) {
+                genreDbStorage.getGenreById(genre.getId())
+                        .orElseThrow(() -> {
+                            log.warn("Некорректный у Genre id = {}", genre.getId());
+                            return new ValidationException(String.format("Некорректный у Genre id = %d", genre.getId()));
+                        });
+            }
+        }
+        if (Objects.nonNull(film.getDirectors()) && !film.getDirectors().isEmpty()) {
+            film.setDirectors(new LinkedHashSet<>(film.getDirectors()));
+            for (Director director : film.getDirectors()) {
+                directorService.getDirectorById(director.getId());
+            }
         }
     }
 
@@ -213,9 +223,28 @@ public class FilmService {
     // Метод установки полей в фильме
     private void setFields(Collection<Film> films) {
         for (Film film : films) {
-            film.addGenre(genreDbStorage.getGenresByFilmId(film.getId()));
+            film.addGenres(genreDbStorage.getGenresByFilmId(film.getId()));
             film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
-            film.addDirector(directorService.getDirectorsByFilmId(film.getId()));
+            film.addDirectors(directorService.getDirectorsByFilmId(film.getId()));
+        }
+    }
+
+    private void correctDuplicates(Film film) {
+        if (Objects.nonNull(film.getGenres())) {
+            Set<Genre> genres = film.getGenres().stream()
+                    .sorted(Comparator.comparing(Genre::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            film.addGenres(genres);
+        } else {
+            film.addGenres(Collections.emptyList());
+        }
+        if (Objects.nonNull(film.getDirectors())) {
+            Set<Director> directors = film.getDirectors().stream()
+                    .sorted(Comparator.comparing(Director::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            film.addDirectors(directors);
+        } else {
+            film.addDirectors(Collections.emptyList());
         }
     }
 }
